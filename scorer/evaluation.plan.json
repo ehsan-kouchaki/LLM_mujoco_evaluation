@@ -1,0 +1,35 @@
+{
+  "decision_ids": [
+    "compiled",
+    "no_nan",
+    "honest_physics",
+    "complexity_limits",
+    "base_frame",
+    "contiguity",
+    "rotors_propellers",
+    "manipulator_topology",
+    "manipulator_joints",
+    "sensors",
+    "mass_score",
+    "system_dimensions",
+    "intercollision",
+    "ee_clearance",
+    "push_stability",
+    "flight_test"
+  ],
+  "evidence": {
+    "aggregation": "weighted",
+    "artifact": {
+      "max_bytes": 4194304,
+      "path": "model.xml",
+      "type": "text-artifact.v1"
+    },
+    "type": "declarative-rubric.v1"
+  },
+  "metric_ids": [],
+  "plan_sha256": "931f2b73bd9621611bf5433fa5e334dbdd446e5b2d50c13dea2a89152178a957",
+  "protocol": "declarative-rubric.v1",
+  "schema_version": "evaluation-plan.v2",
+  "security_tier": "sealed_rescore",
+  "task_spec_sha256": "745d20abc493d936813e16363b212070e830e7944d1c007956346fc6e68e78ef"
+}

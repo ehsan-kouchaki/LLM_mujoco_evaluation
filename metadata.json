@@ -1,0 +1,7 @@
+{
+  "benchmark": "boreal_task",
+  "problem_data": {
+    "instance_id": "aerial-manipulator",
+    "description": "Create an aerial manipulator MJCF matching target constraints"
+  }
+}

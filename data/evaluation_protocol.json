@@ -1,0 +1,108 @@
+{
+  "evaluator_constants": {
+    "simulation": {
+      "timestep_s": 0.001,
+      "integrator": "Euler (mjINT_EULER)",
+      "solref_default": [
+        0.02,
+        1.0
+      ],
+      "solimp_default": [
+        0.9,
+        0.95,
+        0.001,
+        0.5,
+        2.0
+      ],
+      "max_sliding_friction": 1.5,
+      "aerodynamics": "density=0, viscosity=0, wind=[0,0,0]"
+    },
+    "intercollision": {
+      "injected_disc_radius_m": 0.18,
+      "injected_disc_thickness_m": 0.001,
+      "parent_contact_filtering": "disabled via mjDSBL_FILTERPARENT during sweep",
+      "hinge_overlap_exemption_radius_m": 0.02,
+      "sweep_scenarios_count": 6
+    },
+    "push_stability": {
+      "settle_time_s": 3.0,
+      "force_magnitude_n": 20.0,
+      "force_vector": [
+        20.0,
+        0.0,
+        0.0
+      ],
+      "force_application_method": "xfrc_applied at drone body CoM with cross-product torque (r x F, where r = p_hub - p_com) emulating force applied at central hub position",
+      "actuation_during_push": "disabled via mjDSBL_ACTUATION",
+      "push_duration_sec": "from spec['push_test']['duration_sec']",
+      "observe_time_s": 4.0,
+      "tilt_angle_calculation": "acos(dot(z_baseline, z_current)) using drone global rotation matrix",
+      "tilt_angle_range_deg": [
+        30.0,
+        60.0
+      ],
+      "max_displacement_m": 0.05,
+      "max_yaw_deviation_deg": 2.0
+    },
+    "geom_dimensions": {
+      "box_height_formula": "2 * geom_size[2]",
+      "horizontal_capsule_height_formula": "2 * geom_size[0] (radius)",
+      "central_hub_cylinder_height_formula": "2 * geom_size[1] (half-height)",
+      "arm_z_position_m": 0.0,
+      "primary_capsule_definition": "capsule with maximum half-length geom_size[1] on body"
+    },
+    "actuators_and_gear": {
+      "thruster_gear_front_back": [
+        0,
+        0,
+        1,
+        0,
+        0,
+        0.1
+      ],
+      "thruster_gear_left_right": [
+        0,
+        0,
+        1,
+        0,
+        0,
+        -0.1
+      ],
+      "min_propeller_clearance_m": 0.36,
+      "pure_motor_requirements": "gaintype=FIXED (gainprm[0]=1.0), biastype=NONE (biasprm=0)"
+    },
+    "flight_test": {
+      "sensor_requirement": "Dynamically requires exactly 1 sensor of type mjSENS_FRAMEPOS to track global coordinates.",
+      "actuator_requirement": "Dynamically requires exactly 4 thruster actuators attached via mjTRN_SITE.",
+      "control_limits": "Arm PID control outputs are clipped to [-1.0, 1.0]. Rotor commands come from a cascaded controller (XY PD -> roll/pitch setpoints; altitude PD + tilt-compensated gravity feed-forward; roll/pitch/yaw PD on body rates; 4x4 mixer from thruster site positions and declared yaw coefficients), clipped to flight_test.controller.thrust_range.",
+      "tolerances": {
+        "joint_convergence_deg": 5.0,
+        "hover_altitude_m": 0.2,
+        "landing_z_baseline_m": 0.05,
+        "yaw_tracking_deg": "flight_test.controller.yaw_tolerance_deg",
+        "max_tilt_deg": "flight_test.controller.max_tilt_deg",
+        "rotor_saturation": "none allowed in the second half of hover"
+      },
+      "post_landing_settle_s": 1.0
+    }
+  },
+  "tests": {
+    "compiled": "The MJCF must successfully parse and compile into a valid MuJoCo MjModel.",
+    "no_nan": "A 2.0-second unactuated physics rollout must execute cleanly and yield finite positions and velocities (no NaNs).",
+    "honest_physics": "Verifies that gravity is Earth-like (~ -9.81 on Z), no body gravity compensation is used (gravcomp=0), a ground plane exists on the worldbody, global contacts are enabled, enableflags=0, no geometries have contype=0 or conaffinity=0, no contact exclusions (<exclude>) or explicit contact pairs (<pair>) exist, and no geometry names contain the word 'propeller'. Further ensures the free joint has no damping, armature, or frictionloss, no joint has stiffness, sliding friction <= 1.5, torsional/rolling friction <= 0.01, condim = 3 (default) and group = 0 on every geom, priority=0, solref=[0.02, 1.0], solimp=[0.9, 0.95, 0.001, 0.5, 2.0], gap=0, margin=0, no explicit <inertial> elements, no <compiler> settotalmass/boundmass/boundinertia/balanceinertia/inertiagrouprange/inertiafromgeom/fusestatic/alignfree attributes, or forbidden compilation directives (<include>, <replicate>, <composite>, <flexcomp>) are present, Euler integrator is used, density/viscosity/wind are zero, global solver options (cone=pyramidal, impratio=1.0, noslip_iterations=0) remain default, and the <option> tag contains no unauthorized solver attributes.",
+    "complexity_limits": "Verifies the model restricts complexity to a maximum of 30 geoms, 5 bodies including the world body (4 user-defined), 5 joints, exactly 7 actuators that are all <motor> elements (every child of an <actuator> section is a <motor>; compiled actuators have no activation dynamics, fixed gain and no bias), and 5 sites. Ensures exactly 1 plane geom exists, that it is the only geom fixed to the world (worldbody geoms plus geoms of jointless bodies under the worldbody), that every non-world body belongs to the 'drone' body tree, exactly one <worldbody> tag exists in the XML, and that all geometries are strictly capsules, with the sole exceptions of the ground plane and a single cylinder named 'central_hub'. Enforces engineering standardization by parsing the raw XML: explicitly bans the use of 'quat' or 'euler' attributes globally, entirely bans <size> and <flag> tags, requires capsule 'fromto' attributes to use strict 0.01 m increments, capsule 'size' values must be >= 0.005, and, on the compiled model, requires both cylinder-section endpoints of every capsule (however defined, including <default> classes and pos/size/axis forms) to lie on the 0.01 m grid in the frame of the owning body with radius >= 0.005, and all geometry 'mass' attributes must use strict 0.002 increments. Ensures no equality constraints are used (neq=0), tendons are strictly prohibited (ntendon=0), the timestep is exactly 0.001, and solver settings (iterations <= 150, tolerance >= 1e-8) are within allowed limits. Ensures that no joint's armature attribute exceeds 0.0001, damping does not exceed 1.0, and frictionloss does not exceed 0.2 across all degrees of freedom.",
+    "base_frame": "Verifies Body 1 is named 'drone' at [0, 0, 1.0] with a free joint. Checks for a 'central_hub' cylinder at local origin [0, 0, 0] and four identical arms whose geometry centres lie on the +X, -X, +Y, -Y axes at Z=0, all at the same distance from the hub centre. The hub height (2*size[1] for the vertical cylinder) and arm heights (2*size[0] for the horizontal capsules) must comply with central hub height tolerance. Simulates stepping the model to let it settle on the ground plane, ensuring a maximum of 2 geoms across the entire system are in contact with the ground.",
+    "drone_contiguity": "Builds the frame from every geom of the 'drone' body, of any jointless child body of 'drone', and of the optional extra jointed child body of 'drone' (everything except 'link1', 'link2' and their descendants); all must be capsules or cylinders. Places the model in its default pose (qpos0) and computes exact, order-invariant shortest distances between the core line segments of every pair of frame geoms; two geoms touch when that distance is at most the sum of their radii plus 1 mm. A graph traversal from 'central_hub' must reach every frame geom. Floating, disconnected, or gapped geometries fail.",
+    "manipulator_topology": "Verifies two links ('link1' and 'link2') connected in series: 'link2' is the only child body of 'link1', and 'link2' has no child bodies. 'link1' must have exactly one geometry of type capsule. 'link2' must define a capsule as its very first geometry, and this specific capsule must be the longest geometry in the link (acting as the primary geom). The attachment point of 'link1' must have a negative local Z-coordinate relative to the 'drone' body origin (the central_hub centre), and this local vertical distance must fall within the specified 'base_pos_to_hub_range'. Capsule length is the distance between the two fromto endpoints (caps excluded); the capsules must meet minimum length limits, and respect length difference limits. 'link2' must attach exactly at the far fromto endpoint of 'link1's capsule, and its primary geometry must start at local '0 0 0'. Furthermore, the local starting origin of 'link1' must physically intersect (lie inside or on the surface of) a specific capsule named 'arm_base' within the drone body. Furthermore, the total parsed mass of 'link1' and the total parsed mass of 'link2' must each be greater than or equal to the 'links_mass_min' specified in the manipulator constraints.",
+    "mass_score": "Verifies the total system mass falls within the target tolerance window. Additionally checks the raw XML to ensure every geometry placed in the <worldbody> tree (except planes) explicitly defines a mass attribute; geom templates inside <default> are ignored that falls within the specified bounds.",
+    "system_dimensions": "Simulates settling for 2.5 seconds while forcing manipulator joints to 0. Calculates the exact global axis-aligned bounding box (AABB) using support mapping across all non-worldbody geometries. Verifies total system length, width, and height do not exceed specified maximums.",
+    "rotors_propellers": "Verifies exactly 4 named thruster sites are strictly parented to the 'drone' body, sit on their respective arm axis lines, no farther from the hub centre than the outer tip of the arm geometry (capsule cap included), at or above the arm centreline Z and no more than 'rotor_sites_height_diff_max' above it. Ensures every pair of sites is at least 'propellers_diameter' apart. Verifies exactly 4 flight motors with precisely defined gear vectors ([0,0,1,0,0,0.1] for front/back, [0,0,1,0,0,-0.1] for left/right), pure motor dynamics (gaintype FIXED, biastype NONE), no extra site actuators, and verifies every thruster site's local Z-axis coincides with the drone body +Z (sites must not be rotated; only numerical round-off is tolerated).",
+    "manipulator_joints": "Verifies exactly 3 hinge joints ('arm_joint0', 'arm_joint1', 'arm_joint2') located at local '0 0 0' with correct ranges, damping and frictionloss limits. Validates joint axes in global 3D space: joint0 must be parallel to the world Z-axis, while joint1 and joint2 must be strictly parallel to each other and be in a same direction in world coordinates (verified via cross product and dot product). Ensures joint1 and joint2 is strictly orthogonal to the longitudinal axis of link1 and link2's primary capsule respectively. Verifies exactly 3 corresponding motors with gear=1.0, ctrlrange limited to [-1, 1], pure motor dynamics, and no extra arm joint actuators.",
+    "sensors": "Verifies exactly 3 sensors (1 accelerometer, 1 gyro, 1 framepos) all target a single box-type site on the drone body. The site must not exceed maximum height limits and must be mounted horizontally centered with zero vertical clearance directly on top of the central hub (bottom face resting on hub top face). The sensors must not set noise, cutoff, or a relative reference frame (reftype/refname); they report absolute world data.",
+    "intercollision": "Injects virtual propeller discs (radius 0.18 m, thickness 0.001 m) directly into their compiled parent bodies using local coordinates, forces contype/conaffinity flags to 1, and disables parent filtering (mjDSBL_FILTERPARENT). Sweeps the manipulator through 6 specified kinematic scenarios across 100 angle steps. Fails if manipulator links contact drone bodies, virtual propeller discs, or any non-plane environment geometries (worldbody). Collisions strictly between 'link1' and 'link2' are intentionally ignored. Contacts between 'arm_base' and 'link1' are ignored only when they occur within 2 cm of the shoulder joint anchor.",
+    "ee_clearance": "Verifies End Effector Clearance: Simulates the drone dropping to the ground and settling for 5.0 seconds at timestep 0.001, while leaving all manipulator joints unforced and free. Finds the end point (EE) of link2's primary capsule: the outer cap tip (fromto endpoint plus radius along the axis) farthest from the elbow joint. Checks that the absolute vertical distance from the EE to the exact global Z-center (origin) of the 'central_hub' geometry is >= 'to_central_hub'. Checks vertical distance from the EE to the ground plane is >= 'to_ground'.",
+    "push_stability": "Disables motor actuation (mjDSBL_ACTUATION), leaving manipulator joints unactuated and free to move passively. Settles drone for 3.0 seconds, and applies a 20 N lateral force via xfrc_applied at the drone body CoM with torque emulating force application at the central hub location for the specified duration. Observes reaction for 4.0 seconds post-push. Monitors angular tilt using dot product of drone Z-axis. Peak angular tilt must fall within [30\u00b0, 60\u00b0]. Ensures final XY displacement is <= 0.05 m and yaw deviation is <= 2\u00b0.",
+    "flight_test": "Evaluates flight with a fixed, test-supplied cascaded flight controller (no integral terms). Dynamically identifies exactly 4 mjTRN_SITE thruster actuators on the drone body and builds a 4x4 mixer from their site positions and the declared yaw coefficients (fails if singular). Settles the unactuated drone for 'settle_time' and records baseline XY/Z from data.xpos. Runs one or two arm-deployment stages with a PID controller (clipped to [-1, 1]); every actively targeted joint must end within 5 degrees of its setpoint. Takes off and hovers for 'hover_time' with XY hold at the take-off point; the heading command steps by yaw_step_deg halfway through. Requires the maximum altitude to be within 0.2 m of the target, the end-of-hover heading within yaw_tolerance_deg, and no rotor saturation in the second half of the hover. Lands by linear interpolation over 'landing_time' with tilt never above max_tilt_deg, then settles unactuated for 1.0 s. The landed Z must be within 0.05 m of baseline, and the XY drift within max_xy_drift target + tolerance.",
+    "physical_test_validity": "system_dimensions, intercollision, ee_clearance, push_stability and flight_test measure physical behaviour and only pass when honest_physics and complexity_limits also pass. Every other test is evaluated independently of the others."
+  }
+}

@@ -1,0 +1,116 @@
+{
+  "units": "meters, kilograms, newton, second, degrees",
+  "central_hub_height": {
+    "target": 0.035,
+    "tolerance": 0.01
+  },
+  "rotor_sites_height_diff_max": 0.03,
+  "propellers_diameter": 0.36,
+  "manipulator": {
+    "base_pos_to_hub_range": [
+      0.03,
+      0.05
+    ],
+    "link_length_min": 0.15,
+    "links_length_diff_min": 0.1,
+    "links_mass_min": 0.01
+  },
+  "joints_range": {
+    "shoulder_vertical": [
+      0,
+      360
+    ],
+    "shoulder_horizontal": [
+      -95,
+      95
+    ],
+    "elbow": [
+      -95,
+      95
+    ],
+    "damping_max": 0.05,
+    "frictionloss_max": 0.2
+  },
+  "sensor_site_height_max": 0.02,
+  "mass": {
+    "target": 1.5,
+    "tolerance": 0.1,
+    "geom_range": [
+      0.002,
+      0.25
+    ]
+  },
+  "max_dimensions": {
+    "x": 0.7,
+    "y": 0.7,
+    "z": 0.6
+  },
+  "ee_clearance_min": {
+    "to_central_hub": 0.15,
+    "to_ground": 0.1
+  },
+  "push_test": {
+    "force_n": 20.0,
+    "duration_sec": 0.25,
+    "tilt_range_deg": [
+      30.0,
+      60.0
+    ],
+    "yaw_change_max": 2,
+    "displacement_max": 0.05
+  },
+  "flight_test": {
+    "settle_time": 2.0,
+    "pid_arm": {
+      "Kp": 5.0,
+      "Ki": 5.0,
+      "Kd": 0.05
+    },
+    "target_z_displacement": 3.0,
+    "arm_target_duration_1": 10.0,
+    "arm_target_duration_2": 10.0,
+    "hover_time": 10.0,
+    "landing_time": 5.0,
+    "max_xy_drift": {
+      "target": 1.0,
+      "tolerance": 0.1
+    },
+    "test_1": {
+      "joint0_target": 0.0,
+      "joint1_target": -30.0,
+      "joint2_target": 30.0
+    },
+    "test_2": {
+      "joint1_target_1": 25.0,
+      "joint0_target_2": 0.0,
+      "joint1_target_2": -90.0,
+      "joint2_target_2": 90.0
+    },
+    "controller": {
+      "pd_z": {
+        "Kp": 4.0,
+        "Kd": 3.0
+      },
+      "xy_pd": {
+        "Kp": 1.0,
+        "Kd": 1.5
+      },
+      "attitude_pd": {
+        "Kp": 2.0,
+        "Kd": 0.3
+      },
+      "yaw_pd": {
+        "Kp": 0.5,
+        "Kd": 0.15
+      },
+      "tilt_cmd_max_deg": 15.0,
+      "thrust_range": [
+        0.0,
+        8.0
+      ],
+      "yaw_step_deg": 20.0,
+      "yaw_tolerance_deg": 5.0,
+      "max_tilt_deg": 20.0
+    }
+  }
+}
